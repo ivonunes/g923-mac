@@ -21,6 +21,7 @@
 
 /// FLT
 
+#include <device.hpp>
 #include <wheel.hpp>
 
 
@@ -63,7 +64,7 @@ bool init_wheel ()
 {
         flt::device_manager manager ;
 
-        uti::vector< flt::hid_device > wheels = manager.find_known_wheels() ;
+        flt::vector< flt::hid_device > wheels = manager.find_known_wheels() ;
 
         for( auto const & device : wheels )
         {
@@ -84,6 +85,24 @@ bool init_wheel ()
         return false ;
 }
 
+bool update_leds ( float rpm )
+{
+        static constexpr uti::u8_t led_0 { 0x00 } ;
+        static constexpr uti::u8_t led_1 { 0x01 } ;
+        static constexpr uti::u8_t led_2 { 0x03 } ;
+        static constexpr uti::u8_t led_3 { 0x07 } ;
+        static constexpr uti::u8_t led_4 { 0x0F } ;
+        static constexpr uti::u8_t led_5 { 0x1F } ;
+
+        if(      rpm < 1000 ) { return g_wheel.set_led_pattern( led_0 ) ; }
+        else if( rpm < 1200 ) { return g_wheel.set_led_pattern( led_1 ) ; }
+        else if( rpm < 1400 ) { return g_wheel.set_led_pattern( led_2 ) ; }
+        else if( rpm < 1600 ) { return g_wheel.set_led_pattern( led_3 ) ; }
+        else if( rpm < 1800 ) { return g_wheel.set_led_pattern( led_4 ) ; }
+        else if( rpm < 1900 ) { return g_wheel.set_led_pattern( led_5 ) ; }
+        else                  { return g_wheel.set_led_pattern( led_5 ) ; }
+}
+
 bool update_resonance ( telemetry_state_t const & telemetry )
 {
         static constexpr uti::u8_t default_resonance_amplitude_left  { 126 } ;
@@ -100,8 +119,8 @@ bool update_resonance ( telemetry_state_t const & telemetry )
                 previous_rpm = 0 ;
                 return true ;
         }
-        if( -100 < previous_rpm      - telemetry.rpm      && previous_rpm      - telemetry.rpm      < 100 &&
-            -10  < previous_throttle - telemetry.throttle && previous_throttle - telemetry.throttle < 10   )
+        if( -100 < previous_rpm      - telemetry.rpm            && previous_rpm      - telemetry.rpm            < 100 &&
+            -10  < previous_throttle - telemetry.throttle * 100 && previous_throttle - telemetry.throttle * 100 < 10   )
         {
                 previous_rpm      = telemetry.     rpm ;
                 previous_throttle = telemetry.throttle ;
@@ -117,12 +136,12 @@ bool update_resonance ( telemetry_state_t const & telemetry )
         uti::u8_t amp_right = default_resonance_amplitude_right ;
 
         /// increase engine resonance when throttle pressure increases
-        amp_left  -= telemetry.throttle * 100 / 10 ;
-        amp_right += telemetry.throttle * 100 / 10 ;
+        amp_left  -= telemetry.throttle * 100 / 20 ;
+        amp_right += telemetry.throttle * 100 / 20 ;
 
         /// decrease engine resonance when speed increases
-        amp_left  += telemetry.speed / 50 ;
-        amp_right -= telemetry.speed / 50 ;
+        amp_left  += telemetry.speed / 20 ;
+        amp_right -= telemetry.speed / 20 ;
 
         /// clip engine resonance minimum
         if( amp_left  > default_resonance_amplitude_left  ) amp_left  = default_resonance_amplitude_left  ;
@@ -171,14 +190,15 @@ bool update_autocenter ( telemetry_state_t const & telemetry )
 
 bool update_forces ( telemetry_state_t const & telemetry )
 {
-        static uti::i32_t ffb_rate       { 8 } ;
-        static uti::i32_t ffb_rate_count { 8 } ;
+        static uti::i32_t ffb_rate       { 16 } ;
+        static uti::i32_t ffb_rate_count { 16 } ;
 
         --ffb_rate_count ;
 
         if( ffb_rate_count == 0 )
         {
-                if( !update_autocenter( telemetry ) ) { return false ; }
+                if( !update_autocenter( telemetry     ) ) { return false ; }
+                if( !update_leds      ( telemetry.rpm ) ) { return false ; }
 
                 ffb_rate_count = ffb_rate ;
         }
@@ -217,6 +237,7 @@ SCSAPI_VOID telemetry_frame_end ( [[ maybe_unused ]] scs_event_t const event, [[
         {
                 g_wheel.stop_forces() ;
                 g_wheel.disable_autocenter() ;
+                update_leds( 0 ) ;
                 return ;
         }
         if( !update_forces( g_telemetry_state ) )
@@ -233,6 +254,7 @@ SCSAPI_VOID telemetry_pause ( scs_event_t const event, [[ maybe_unused ]] void c
         {
                 g_wheel.stop_forces() ;
                 g_wheel.disable_autocenter() ;
+                update_leds( 0 ) ;
                 g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : telemetry paused, stopped forces" ) ;
         }
         else
