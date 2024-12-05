@@ -14,6 +14,7 @@
 
 #define FLT_CMD_QUIT        'q'
 #define FLT_CMD_HELP        'h'
+#define FLT_CMD_REINIT      'r'
 
 #define FLT_CMD_AUTO        'a'
 #define FLT_CMD_AUTO_ON     'y'
@@ -34,6 +35,7 @@ void print_warning_prefix () ;
 void print_error_prefix   () ;
 
 void do_cmd_auto   ( flt::wheel & wheel ) ;
+void do_cmd_stop   ( flt::wheel & wheel ) ;
 void do_cmd_spring ( flt::wheel & wheel ) ;
 void do_cmd_damper ( flt::wheel & wheel ) ;
 void do_cmd_const  ( flt::wheel & wheel ) ;
@@ -48,6 +50,7 @@ int main ()
         printf( " //////////////////////\n"   ) ;
         flt::terminal_reset() ;
 
+init:
         flt::terminal_faint() ;
         printf( "/// flt : looking for steering wheels...\n" ) ;
         flt::terminal_reset() ;
@@ -92,6 +95,7 @@ int main ()
 
         while( cmd != FLT_CMD_QUIT )
         {
+                bool reinit = false ;
                 scanf( "%c", &cmd ) ;
 
                 switch( cmd )
@@ -103,11 +107,14 @@ int main ()
                         case FLT_CMD_HELP:
                                 print_help() ;
                                 break ;
+                        case FLT_CMD_REINIT:
+                                reinit = true ;
+                                break ;
                         case FLT_CMD_AUTO:
                                 do_cmd_auto( wheel ) ;
                                 break ;
                         case FLT_CMD_FORCE_OFF:
-                                wheel.stop_forces() ;
+                                do_cmd_stop( wheel ) ;
                                 break ;
                         case FLT_CMD_SPRING_CONF:
                                 do_cmd_spring( wheel ) ;
@@ -127,6 +134,7 @@ int main ()
                         default:
                                 break ;
                 }
+                if( reinit ) goto init ;
                 if( cmd != '\n' && cmd != FLT_CMD_QUIT )
                 {
                         print_faint_prefix() ;
@@ -200,6 +208,18 @@ void do_cmd_auto ( flt::wheel & wheel )
                 print_faint_prefix() ;
                 printf( "autocentering spring set\n" ) ;
         }
+}
+
+void do_cmd_stop ( flt::wheel & wheel )
+{
+        if( !wheel.stop_forces() )
+        {
+                print_error_prefix() ;
+                printf( "failed stopping forces\n" ) ;
+                return ;
+        }
+        print_faint_prefix() ;
+        printf( "stopped forces\n" ) ;
 }
 
 void do_cmd_spring ( flt::wheel & wheel )
@@ -356,6 +376,7 @@ void print_help ()
         printf( "%s///%s commands :\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    q - quit\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    h - help\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
+        printf( "%s///%s    r - reinitialize wheel\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    a - configure autocentering\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    x - stop forces\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    s - configure spring force\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;

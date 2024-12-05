@@ -103,92 +103,41 @@ bool update_leds ( float rpm )
         else                  { return g_wheel.set_led_pattern( led_5 ) ; }
 }
 
-bool update_resonance ( telemetry_state_t const & telemetry )
+bool update_forces ( telemetry_state_t const & telemetry )
 {
-        static constexpr uti::u8_t default_resonance_amplitude_left  { 126 } ;
-        static constexpr uti::u8_t default_resonance_amplitude_right { 129 } ;
-
-        static constexpr uti::u8_t default_resonance_step_x { 6 } ;
-        static constexpr uti::u8_t default_resonance_step_y { 6 } ;
-
-        static uti::u64_t previous_rpm      { 0 } ;
-        static uti::u64_t previous_throttle { 0 } ;
-
-        if( telemetry.rpm == 0 )
+        if( telemetry.speed < 0.5f )
         {
-                previous_rpm = 0 ;
-                return true ;
-        }
-        if( -100 < previous_rpm      - telemetry.rpm            && previous_rpm      - telemetry.rpm            < 100 &&
-            -10  < previous_throttle - telemetry.throttle * 100 && previous_throttle - telemetry.throttle * 100 < 10   )
-        {
-                previous_rpm      = telemetry.     rpm ;
-                previous_throttle = telemetry.throttle ;
-                return true ;
-        }
-        previous_rpm      = telemetry.     rpm ;
-        previous_throttle = telemetry.throttle ;
-
-        /// determine resonance frequency according to engine rpm
-        uti::u8_t frequency = ( 255 - ( ( float ) telemetry.rpm / 3000.0f * 255.0f ) ) / 4 ;
-
-        uti::u8_t amp_left  = default_resonance_amplitude_left  ;
-        uti::u8_t amp_right = default_resonance_amplitude_right ;
-
-        /// increase engine resonance when throttle pressure increases
-        amp_left  -= telemetry.throttle * 100 / 20 ;
-        amp_right += telemetry.throttle * 100 / 20 ;
-
-        /// decrease engine resonance when speed increases
-        amp_left  += telemetry.speed / 20 ;
-        amp_right -= telemetry.speed / 20 ;
-
-        /// clip engine resonance minimum
-        if( amp_left  > default_resonance_amplitude_left  ) amp_left  = default_resonance_amplitude_left  ;
-        if( amp_right > default_resonance_amplitude_right ) amp_right = default_resonance_amplitude_right ;
-
-        return g_wheel.set_trapezoid( amp_left  ,
-                                      amp_right ,
-                                      frequency ,
-                                      frequency ,
-                                      default_resonance_step_x,
-                                      default_resonance_step_y
-        ) ;
-}
-
-bool update_autocenter ( telemetry_state_t const & telemetry )
-{
-        if( telemetry.speed < 1 )
-        {
-                g_wheel.disable_autocenter() ;
+                if( !g_wheel.disable_autocenter() ) return false ;
 
                 if( telemetry.rpm == 0 )
                 {
-                        return g_wheel.set_damper( 2, 2, 0, 0 ) ;
+                        return g_wheel.set_damper( 4, 4, 0, 0 ) ;
                 }
                 else
                 {
-                        return update_resonance( telemetry ) ;
+                        return g_wheel.set_damper( 1, 1, 0, 0 ) ;
                 }
         }
         else
         {
-                g_wheel.enable_autocenter() ;
+                uti::u8_t centering_slope { 0 } ;
+                uti::u8_t centering_force { 0 } ;
 
-                /// should check if ats or ets2
-                uti::u8_t centering_slope = telemetry.speed < 45 ? 2 : 3 ;
-                uti::u8_t centering_force = ( float ) telemetry.speed / 100.0f * 255 ;
+                if(      telemetry.speed < 45 ) centering_slope = 2 ;
+                else if( telemetry.speed < 75 ) centering_slope = 3 ;
+                else                            centering_slope = 4 ;
 
-                if( centering_force < 48 ) centering_force = 48 ;
+                centering_force = telemetry.speed * telemetry.speed / 2000.0f * 255 ;
+
                 if( centering_force > 64 ) centering_force = 64 ;
 
-                g_wheel.set_autocenter_spring( centering_slope, centering_slope, centering_force ) ;
+                if( g_wheel.set_autocenter_spring( centering_slope, centering_slope, centering_force ) ) return false ;
 
-                return update_resonance( telemetry ) ;
+                return g_wheel.enable_autocenter() ;
         }
 }
 
-bool update_forces ( telemetry_state_t const & telemetry )
+bool update_wheel ( telemetry_state_t const & telemetry )
 {
         static uti::i32_t ffb_rate       { 16 } ;
         static uti::i32_t ffb_rate_count { 16 } ;
@@ -197,8 +146,8 @@ bool update_forces ( telemetry_state_t const & telemetry )
 
         if( ffb_rate_count == 0 )
         {
-                if( !update_autocenter( telemetry     ) ) { return false ; }
-                if( !update_leds      ( telemetry.rpm ) ) { return false ; }
+                if( !update_forces( telemetry     ) ) return false ;
+                if( !update_leds  ( telemetry.rpm ) ) return false ;
 
                 ffb_rate_count = ffb_rate ;
         }
@@ -240,7 +189,7 @@ SCSAPI_VOID telemetry_frame_end ( [[ maybe_unused ]] scs_event_t const event, [[
                 update_leds( 0 ) ;
                 return ;
         }
-        if( !update_forces( g_telemetry_state ) )
+        if( !update_wheel( g_telemetry_state ) )
         {
                 g_game_log( SCS_LOG_TYPE_error, "flt_ffb::error : failed updating forces!" ) ;
         }
