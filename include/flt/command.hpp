@@ -1,17 +1,28 @@
 //
 //
 //      flt
-//      command.cpp
+//      command.hpp
 //
 
-#include <command.hpp>
+#pragma once
+
+#include <types.hpp>
+
+#define FLT_CMD_MAX_COUNT 4
+#define FLT_CMD_MAX_LEN   8
 
 
 namespace flt
 {
 
 
-IOReturn send_report ( hid_device const & device, report const & report )
+struct report
+{
+        uti::u8_t cmd [ FLT_CMD_MAX_LEN ] ;
+} ;
+
+
+constexpr IOReturn send_report ( hid_device const & device, report const & report )
 {
         uti::u8_t const * cmd = &report.cmd[ 0 ] ;
 
@@ -20,7 +31,7 @@ IOReturn send_report ( hid_device const & device, report const & report )
         return result ;
 }
 
-IOReturn send_report ( hid_device const & device, vector< report > const & reports )
+constexpr IOReturn send_report ( hid_device const & device, vector< report > const & reports )
 {
         IOReturn result ;
 
