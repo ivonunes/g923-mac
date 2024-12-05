@@ -1,7 +1,7 @@
 //
 //
 //      flt
-//      device_manager.cpp
+//      device.cpp
 //
 
 #include <device.hpp>
@@ -43,7 +43,6 @@ IOReturn close_device ( hid_device const & device )
 {
         return IOHIDDeviceClose( device.hid_device_, 0 ) ;
 }
-
 
 
 } // namespace flt
