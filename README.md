@@ -4,7 +4,12 @@
 
 ## what?
 
-`fffb` is a plugin for scs games which uses the TelemetrySDK to read truck telemetry data, constructs custom forces and plays them on your logitech G923  
+### flt
+
+`flt` is a command line utility which communicates with logitech steering wheels via the [classic ffb protocol](https://opensource.logitech.com/wiki/force_feedback/Logitech_Force_Feedback_Protocol_V1.6.pdf) and can be used to configure the steering wheel directly  
+
+### fffb
+`fffb` is a plugin for [scs games](https://www.scssoft.com/) which uses the [TelemetrySDK](https://modding.scssoft.com/wiki/Documentation/Engine/SDK/Telemetry) to read truck telemetry data, constructs custom forces and plays them on your logitech G923  
 
 ## why?
 
@@ -19,7 +24,7 @@ to interact with the wheel, i use `flt`, a small library i wrote for interacting
 
 ## usage
 
-to build the plugin:  
+to build `flt` and `fffb`:  
 
 ```bash
 # clone the repo
@@ -28,7 +33,7 @@ git clone https://github.com/eddieavd/fffb && cd fffb
 # create build directory
 mkdir build && cd build
 
-# configure and build fffb
+# configure and build project
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j8
 
@@ -44,10 +49,10 @@ cp libfffb.dylib ~/Library/Application\ Support/Steam/steamapps/common/American\
 now you can launch ets2/ats.  
 upon launch, you'll see the advanced sdk features popup, hit OK and the plugin initialization starts.  
 if the wheel leds start flashing and the wheel turns to the right and back, wheel initialization was successful and you should be good to go!  
-however, wheel initialization is a bit unstable so if you don't see the leds flash, reload the plugin by running `sdk reinit` in the in-game console
+however, wheel initialization is a bit unstable so if you don't see the leds flash, reload the plugin by running `sdk reinit` in the in-game console  
 
 ## disclaimer
 
 should work on any apple silicon mac, not tested on x86_64  
 works only with Logitech G923 PS  
-the ffb protocol is similar on other logitech wheels so it should be easy to extend support, but i don't have any other wheels and don't feel like writing code i can't test.  
+the ffb protocol is similar on other logitech wheels so it should be easy to extend support, but i don't have any other wheels and don't feel like writing code i can't test  
