@@ -8,6 +8,8 @@
 
 #include <uti/type/traits.hpp>
 #include <uti/container/array.hpp>
+#include <uti/container/vector.hpp>
+#include <uti/allocator/freelist_resource.hpp>
 
 #include <IOKit/hid/IOHIDDevice.h>
 #include <IOKit/hid/IOHIDManager.h>
@@ -20,6 +22,9 @@ namespace flt
 using   device_id_t =     uti::u32_t ;
 using  hid_device_t = __IOHIDDevice  ;
 using hid_manager_t = __IOHIDManager ;
+
+template< typename T >
+using vector = uti::vector< T, uti::allocator< T, uti::static_freelist_resource< 1024 * 1024 > > > ;
 
 
 struct hid_device

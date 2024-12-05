@@ -8,8 +8,6 @@
 
 #include <types.hpp>
 
-#include <uti/container/vector.hpp>
-
 #include <iterator>
 #include <algorithm>
 
@@ -34,9 +32,9 @@ class device_manager
 public:
         device_manager () noexcept : hid_manager_( _create_hid_manager() ) {}
 
-        auto list_devices () -> uti::vector< hid_device >
+        auto list_devices () -> vector< hid_device >
         {
-                uti::vector< hid_device > dev_set ;
+                vector< hid_device > dev_set ;
 
                 CFSetRef device_setref = IOHIDManagerCopyDevices( hid_manager_ ) ;
                 CFIndex count = CFSetGetCount( device_setref ) ;
@@ -61,10 +59,10 @@ public:
                 return dev_set ;
         }
 
-        auto find_known_wheels () -> uti::vector< hid_device >
+        auto find_known_wheels () -> vector< hid_device >
         {
-                uti::vector< hid_device > dev_set = list_devices() ;
-                uti::vector< hid_device > wheels ;
+                vector< hid_device > dev_set = list_devices() ;
+                vector< hid_device > wheels ;
 
                 std::copy_if( dev_set.begin(), dev_set.end(), std::back_inserter( wheels ),
                              [ & ]( hid_device const & dev )

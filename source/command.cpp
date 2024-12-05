@@ -20,7 +20,7 @@ IOReturn send_report ( hid_device const & device, report const & report )
         return result ;
 }
 
-IOReturn send_report ( hid_device const & device, uti::vector< report > const & reports )
+IOReturn send_report ( hid_device const & device, vector< report > const & reports )
 {
         IOReturn result ;
 

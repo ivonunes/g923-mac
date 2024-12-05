@@ -8,8 +8,6 @@
 
 #include <types.hpp>
 
-#include <uti/container/vector.hpp>
-
 #define FLT_CMD_MAX_COUNT 4
 #define FLT_CMD_MAX_LEN   8
 
@@ -24,8 +22,8 @@ struct report
 } ;
 
 
-IOReturn send_report ( hid_device const & device,              report   const & report  ) ;
-IOReturn send_report ( hid_device const & device, uti::vector< report > const & reports ) ;
+IOReturn send_report ( hid_device const & device,         report   const & report  ) ;
+IOReturn send_report ( hid_device const & device, vector< report > const & reports ) ;
 
 
 } // namespace flt
