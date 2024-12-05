@@ -7,8 +7,7 @@
 #pragma once
 
 #include <uti/type/traits.hpp>
-//#include <uti/container/array.hpp>
-#include <array>
+#include <uti/container/array.hpp>
 
 #include <IOKit/hid/IOHIDDevice.h>
 #include <IOKit/hid/IOHIDManager.h>
@@ -33,7 +32,7 @@ struct hid_device
 } ;
 
 
-constexpr std::array< device_id_t, 1 > known_wheel_ids = { 0xc266046d } ;
+constexpr uti::array< device_id_t, 1 > known_wheel_ids = { 0xc266046d } ;
 
 
 } // namespace flt
