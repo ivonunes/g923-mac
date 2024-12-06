@@ -118,7 +118,8 @@ bool update_forces ( telemetry_state_t const & telemetry )
         }
         else
         {
-                if(      telemetry.speed < 45 ) { autocenter_slope = 2 ; damper_force = 2 ; }
+                if(      telemetry.speed <  5 ) { autocenter_slope = 2 ; damper_force = 2 ; }
+                else if( telemetry.speed < 45 ) { autocenter_slope = 2 ; damper_force = 1 ; }
                 else if( telemetry.speed < 75 ) { autocenter_slope = 3 ; damper_force = 1 ; }
                 else                            { autocenter_slope = 4 ; damper_force = 0 ; }
 
