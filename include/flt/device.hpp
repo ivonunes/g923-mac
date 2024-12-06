@@ -18,21 +18,21 @@ namespace flt
 {
 
 
-void set_applier_function_copy_to_cfarray ( void const * value, void * context ) ;
+constexpr void set_applier_function_copy_to_cfarray ( void const * value, void * context ) ;
 
-CFStringRef get_property_string ( IOHIDDeviceRef hid_device, CFStringRef property ) ;
-uti::u32_t  get_property_number ( IOHIDDeviceRef hid_device, CFStringRef property ) ;
+constexpr CFStringRef get_property_string ( IOHIDDeviceRef hid_device, CFStringRef property ) ;
+constexpr uti::u32_t  get_property_number ( IOHIDDeviceRef hid_device, CFStringRef property ) ;
 
-IOReturn  open_device ( hid_device const & device ) ;
-IOReturn close_device ( hid_device const & device ) ;
+constexpr IOReturn  open_device ( hid_device const & device ) ;
+constexpr IOReturn close_device ( hid_device const & device ) ;
 
 
 class device_manager
 {
 public:
-        device_manager () noexcept : hid_manager_( _create_hid_manager() ) {}
+        constexpr device_manager () noexcept : hid_manager_( _create_hid_manager() ) {}
 
-        auto list_devices () -> vector< hid_device >
+        constexpr auto list_devices () -> vector< hid_device >
         {
                 vector< hid_device > dev_set ;
 
@@ -59,7 +59,7 @@ public:
                 return dev_set ;
         }
 
-        auto find_known_wheels () -> vector< hid_device >
+        constexpr auto find_known_wheels () -> vector< hid_device >
         {
                 vector< hid_device > dev_set = list_devices() ;
                 vector< hid_device > wheels ;
@@ -73,22 +73,57 @@ public:
                 return wheels ;
         }
 
-        ~device_manager () { _destroy_hid_manager( hid_manager_ ) ; }
+        constexpr ~device_manager () { _destroy_hid_manager( hid_manager_ ) ; }
 private:
         hid_manager_t * hid_manager_ ;
 
-        hid_manager_t * _create_hid_manager ()
+        constexpr hid_manager_t * _create_hid_manager ()
         {
                 hid_manager_t * manager = IOHIDManagerCreate( kCFAllocatorDefault, kIOHIDManagerOptionNone ) ;
                 IOHIDManagerSetDeviceMatching( manager, NULL ) ;
                 IOHIDManagerOpen( manager, kIOHIDOptionsTypeSeizeDevice ) ;
                 return manager ;
         }
-        void _destroy_hid_manager ( hid_manager_t * manager )
+
+        constexpr void _destroy_hid_manager ( hid_manager_t * manager )
         {
                 IOHIDManagerClose( manager, kIOHIDManagerOptionNone ) ;
         }
 } ;
+
+
+constexpr void set_applier_function_copy_to_cfarray ( void const * value, void * context )
+{
+        CFArrayAppendValue( static_cast< CFMutableArrayRef >( context ), value ) ;
+}
+
+constexpr CFStringRef get_property_string ( hid_device_t * hid_device, CFStringRef property )
+{
+        CFTypeRef data_ref = IOHIDDeviceGetProperty( hid_device, property ) ;
+        return CFStringCreateCopy( kCFAllocatorDefault, CFStringRef( data_ref ) ) ;
+}
+
+constexpr uti::u32_t get_property_number ( hid_device_t * hid_device, CFStringRef property )
+{
+        CFTypeRef data_ref = IOHIDDeviceGetProperty( hid_device, property ) ;
+        if( data_ref && ( CFNumberGetTypeID() == CFGetTypeID( data_ref ) ) )
+        {
+                uti::u32_t number ;
+                CFNumberGetValue( ( CFNumberRef ) data_ref, kCFNumberSInt32Type, &number ) ;
+                return number ;
+        }
+        return 0 ;
+}
+
+constexpr IOReturn open_device ( hid_device const & device )
+{
+        return IOHIDDeviceOpen( device.hid_device_, kIOHIDOptionsTypeSeizeDevice ) ;
+}
+
+constexpr IOReturn close_device ( hid_device const & device )
+{
+        return IOHIDDeviceClose( device.hid_device_, 0 ) ;
+}
 
 
 } // namespace flt

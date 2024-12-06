@@ -24,7 +24,7 @@ using  hid_device_t = __IOHIDDevice  ;
 using hid_manager_t = __IOHIDManager ;
 
 template< typename T >
-using vector = uti::vector< T, uti::allocator< T, uti::static_freelist_resource< 1024 * 1024 > > > ;
+using vector = uti::vector< T, uti::allocator< T, uti::static_freelist_resource< 1024 > > > ;
 
 
 struct hid_device

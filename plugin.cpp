@@ -1,6 +1,6 @@
 ///
 ///
-///     flt_ffb_scs
+///     fffb_scs
 ///     plugin.cpp
 ///
 
@@ -21,8 +21,8 @@
 
 /// FLT
 
-#include <device.hpp>
-#include <wheel.hpp>
+#include <flt/device.hpp>
+#include <flt/wheel.hpp>
 
 
 bool g_telemetry_paused { true } ;
@@ -72,11 +72,11 @@ bool init_wheel ()
 
                 if( !wheel.calibrate() )
                 {
-                        g_game_log( SCS_LOG_TYPE_warning, "flt_ffb::warning : failed initializing device" ) ;
+                        g_game_log( SCS_LOG_TYPE_warning, "fffb::warning : failed initializing device" ) ;
                 }
                 else
                 {
-                        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : wheel initialized" ) ;
+                        g_game_log( SCS_LOG_TYPE_message, "fffb::info : wheel initialized" ) ;
                         g_wheel = flt::wheel( device ) ;
 
                         return true ;
@@ -94,101 +94,76 @@ bool update_leds ( float rpm )
         static constexpr uti::u8_t led_4 { 0x0F } ;
         static constexpr uti::u8_t led_5 { 0x1F } ;
 
-        if(      rpm < 1000 ) { return g_wheel.set_led_pattern( led_0 ) ; }
-        else if( rpm < 1200 ) { return g_wheel.set_led_pattern( led_1 ) ; }
-        else if( rpm < 1400 ) { return g_wheel.set_led_pattern( led_2 ) ; }
+        if(      rpm ==   0 ) { return g_wheel.set_led_pattern( led_0 ) ; }
+        else if( rpm < 1000 ) { return g_wheel.set_led_pattern( led_1 ) ; }
+        else if( rpm < 1300 ) { return g_wheel.set_led_pattern( led_2 ) ; }
         else if( rpm < 1600 ) { return g_wheel.set_led_pattern( led_3 ) ; }
         else if( rpm < 1800 ) { return g_wheel.set_led_pattern( led_4 ) ; }
         else if( rpm < 1900 ) { return g_wheel.set_led_pattern( led_5 ) ; }
         else                  { return g_wheel.set_led_pattern( led_5 ) ; }
 }
 
-bool update_resonance ( telemetry_state_t const & telemetry )
+bool update_forces ( telemetry_state_t const & telemetry )
 {
-        static constexpr uti::u8_t default_resonance_amplitude_left  { 126 } ;
-        static constexpr uti::u8_t default_resonance_amplitude_right { 129 } ;
+        bool all_passed { true } ;
 
-        static constexpr uti::u8_t default_resonance_step_x { 6 } ;
-        static constexpr uti::u8_t default_resonance_step_y { 6 } ;
+        uti::u8_t autocenter_slope { 0 } ;
+        uti::u8_t autocenter_force { 0 } ;
+        uti::u8_t     damper_force { 0 } ;
 
-        static uti::u64_t previous_rpm      { 0 } ;
-        static uti::u64_t previous_throttle { 0 } ;
-
-        if( telemetry.rpm == 0 )
-        {
-                previous_rpm = 0 ;
-                return true ;
-        }
-        if( -100 < previous_rpm      - telemetry.rpm            && previous_rpm      - telemetry.rpm            < 100 &&
-            -10  < previous_throttle - telemetry.throttle * 100 && previous_throttle - telemetry.throttle * 100 < 10   )
-        {
-                previous_rpm      = telemetry.     rpm ;
-                previous_throttle = telemetry.throttle ;
-                return true ;
-        }
-        previous_rpm      = telemetry.     rpm ;
-        previous_throttle = telemetry.throttle ;
-
-        /// determine resonance frequency according to engine rpm
-        uti::u8_t frequency = ( 255 - ( ( float ) telemetry.rpm / 3000.0f * 255.0f ) ) / 4 ;
-
-        uti::u8_t amp_left  = default_resonance_amplitude_left  ;
-        uti::u8_t amp_right = default_resonance_amplitude_right ;
-
-        /// increase engine resonance when throttle pressure increases
-        amp_left  -= telemetry.throttle * 100 / 20 ;
-        amp_right += telemetry.throttle * 100 / 20 ;
-
-        /// decrease engine resonance when speed increases
-        amp_left  += telemetry.speed / 20 ;
-        amp_right -= telemetry.speed / 20 ;
-
-        /// clip engine resonance minimum
-        if( amp_left  > default_resonance_amplitude_left  ) amp_left  = default_resonance_amplitude_left  ;
-        if( amp_right > default_resonance_amplitude_right ) amp_right = default_resonance_amplitude_right ;
-
-        return g_wheel.set_trapezoid( amp_left  ,
-                                      amp_right ,
-                                      frequency ,
-                                      frequency ,
-                                      default_resonance_step_x,
-                                      default_resonance_step_y
-        ) ;
-}
-
-bool update_autocenter ( telemetry_state_t const & telemetry )
-{
         if( telemetry.speed < 1 )
         {
-                g_wheel.disable_autocenter() ;
+                if( telemetry.rpm == 0 ) damper_force = 3 ;
+                else                     damper_force = 2 ;
+        }
+        else
+        {
+                if(      telemetry.speed <  5 ) { autocenter_slope = 2 ; damper_force = 2 ; }
+                else if( telemetry.speed < 45 ) { autocenter_slope = 2 ; damper_force = 1 ; }
+                else if( telemetry.speed < 75 ) { autocenter_slope = 3 ; damper_force = 1 ; }
+                else                            { autocenter_slope = 4 ; damper_force = 0 ; }
 
-                if( telemetry.rpm == 0 )
+                autocenter_force = telemetry.speed * telemetry.speed / 2000.0f * 255 ;
+
+                if( autocenter_force < 24 ) autocenter_force = 24 ;
+                if( autocenter_force > 64 ) autocenter_force = 64 ;
+        }
+        if( damper_force > 0 )
+        {
+                if( !g_wheel.set_damper( damper_force, damper_force, 0, 0 ) )
                 {
-                        return g_wheel.set_damper( 2, 2, 0, 0 ) ;
-                }
-                else
-                {
-                        return update_resonance( telemetry ) ;
+                        g_game_log( SCS_LOG_TYPE_error, "fffb : failed setting damper force" ) ;
+                        all_passed = false ;
                 }
         }
         else
         {
-                g_wheel.enable_autocenter() ;
-
-                /// should check if ats or ets2
-                uti::u8_t centering_slope = telemetry.speed < 45 ? 2 : 3 ;
-                uti::u8_t centering_force = ( float ) telemetry.speed / 100.0f * 255 ;
-
-                if( centering_force < 48 ) centering_force = 48 ;
-                if( centering_force > 64 ) centering_force = 64 ;
-
-                g_wheel.set_autocenter_spring( centering_slope, centering_slope, centering_force ) ;
-
-                return update_resonance( telemetry ) ;
+                if( !g_wheel.stop_forces() )
+                {
+                        g_game_log( SCS_LOG_TYPE_error, "fffb : failed stopping forces" ) ;
+                        all_passed = false ;
+                }
         }
+        if( autocenter_force > 0 )
+        {
+                if( !g_wheel.enable_autocenter() || !g_wheel.set_autocenter_spring( autocenter_slope, autocenter_slope, autocenter_force ) )
+                {
+                        g_game_log( SCS_LOG_TYPE_error, "fffb : failed setting autocenter spring force" ) ;
+                        all_passed = false ;
+                }
+        }
+        else
+        {
+                if( !g_wheel.disable_autocenter() )
+                {
+                        g_game_log( SCS_LOG_TYPE_error, "fffb : failed disabling autocenter spring" ) ;
+                        all_passed = false ;
+                }
+        }
+        return all_passed ;
 }
 
-bool update_forces ( telemetry_state_t const & telemetry )
+bool update_wheel ( telemetry_state_t const & telemetry )
 {
         static uti::i32_t ffb_rate       { 16 } ;
         static uti::i32_t ffb_rate_count { 16 } ;
@@ -197,8 +172,8 @@ bool update_forces ( telemetry_state_t const & telemetry )
 
         if( ffb_rate_count == 0 )
         {
-                if( !update_autocenter( telemetry     ) ) { return false ; }
-                if( !update_leds      ( telemetry.rpm ) ) { return false ; }
+                if( !update_forces( telemetry     ) ) { g_game_log( SCS_LOG_TYPE_error, "update_forces" ) ; return false ; }
+                if( !update_leds  ( telemetry.rpm ) ) { g_game_log( SCS_LOG_TYPE_error, "update_leds"   ) ; return false ; }
 
                 ffb_rate_count = ffb_rate ;
         }
@@ -240,9 +215,9 @@ SCSAPI_VOID telemetry_frame_end ( [[ maybe_unused ]] scs_event_t const event, [[
                 update_leds( 0 ) ;
                 return ;
         }
-        if( !update_forces( g_telemetry_state ) )
+        if( !update_wheel( g_telemetry_state ) )
         {
-                g_game_log( SCS_LOG_TYPE_error, "flt_ffb::error : failed updating forces!" ) ;
+                g_game_log( SCS_LOG_TYPE_error, "fffb::error : failed updating forces!" ) ;
         }
 }
 
@@ -255,7 +230,7 @@ SCSAPI_VOID telemetry_pause ( scs_event_t const event, [[ maybe_unused ]] void c
                 g_wheel.stop_forces() ;
                 g_wheel.disable_autocenter() ;
                 update_leds( 0 ) ;
-                g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : telemetry paused, stopped forces" ) ;
+                g_game_log( SCS_LOG_TYPE_message, "fffb::info : telemetry paused, stopped forces" ) ;
         }
         else
         {
@@ -308,7 +283,7 @@ SCSAPI_RESULT scs_telemetry_init ( scs_u32_t const version, scs_telemetry_init_p
 
         g_game_log = version_params->common.log ;
 
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : starting initialization..." ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : version " FLT_VERSION " starting initialization..." ) ;
 
         if( strcmp( version_params->common.game_id, SCS_GAME_ID_EUT2 ) == 0 )
         {
@@ -342,8 +317,8 @@ SCSAPI_RESULT scs_telemetry_init ( scs_u32_t const version, scs_telemetry_init_p
         {
                 g_game_log( SCS_LOG_TYPE_warning, "ftl_ffb::warning : unknown game, some stuff might be broken" ) ;
         }
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : version checks passed" ) ;
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : registering to events..." ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : version checks passed" ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : registering to events..." ) ;
 
         bool const events_registered =
                 ( version_params->register_for_event( SCS_TELEMETRY_EVENT_frame_start, telemetry_frame_start, nullptr ) == SCS_RESULT_ok ) &&
@@ -353,11 +328,11 @@ SCSAPI_RESULT scs_telemetry_init ( scs_u32_t const version, scs_telemetry_init_p
 
         if( !events_registered )
         {
-                g_game_log( SCS_LOG_TYPE_error, "flt_ffb::error : failed to register event callbacks" ) ;
+                g_game_log( SCS_LOG_TYPE_error, "fffb::error : failed to register event callbacks" ) ;
                 return SCS_RESULT_generic_error ;
         }
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : event registration successful" ) ;
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : registering to channels..." ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : event registration successful" ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : registering to channels..." ) ;
 
         version_params->register_for_channel( SCS_TELEMETRY_TRUCK_CHANNEL_world_placement, SCS_U32_NIL, SCS_VALUE_TYPE_euler, SCS_TELEMETRY_CHANNEL_FLAG_no_value, telemetry_store_orientation, &g_telemetry_state       );
         version_params->register_for_channel( SCS_TELEMETRY_TRUCK_CHANNEL_speed          , SCS_U32_NIL, SCS_VALUE_TYPE_float, SCS_TELEMETRY_CHANNEL_FLAG_none    , telemetry_store_float      , &g_telemetry_state.speed );
@@ -369,22 +344,22 @@ SCSAPI_RESULT scs_telemetry_init ( scs_u32_t const version, scs_telemetry_init_p
         version_params->register_for_channel( SCS_TELEMETRY_TRUCK_CHANNEL_effective_brake   , SCS_U32_NIL, SCS_VALUE_TYPE_float, SCS_TELEMETRY_CHANNEL_FLAG_none, telemetry_store_float, &g_telemetry_state.brake     );
         version_params->register_for_channel( SCS_TELEMETRY_TRUCK_CHANNEL_effective_clutch  , SCS_U32_NIL, SCS_VALUE_TYPE_float, SCS_TELEMETRY_CHANNEL_FLAG_none, telemetry_store_float, &g_telemetry_state.clutch    );
 
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : channel registration successful" ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : channel registration successful" ) ;
 
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : initializing wheel..." ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : initializing wheel..." ) ;
         if( !init_wheel() )
         {
                 g_game_log( SCS_LOG_TYPE_error, "ftl_ffb::error : failed to initialize wheel" ) ;
                 return SCS_RESULT_generic_error ;
         }
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : wheel initialization successful" ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : wheel initialization successful" ) ;
 
         memset( &g_telemetry_state, 0, sizeof( g_telemetry_state ) ) ;
         g_last_timestamp = static_cast< scs_timestamp_t >( -1 ) ;
 
         g_telemetry_paused = true ;
 
-        g_game_log( SCS_LOG_TYPE_message, "flt_ffb::info : successfully initialized" ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : successfully initialized" ) ;
         return SCS_RESULT_ok ;
 }
 
