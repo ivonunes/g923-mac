@@ -46,7 +46,7 @@ int main ()
 {
         flt::terminal_bold() ;
         printf( "   //////////////////////\n" ) ;
-        printf( "  ///   flt v0.0.1   ///\n"  ) ;
+        printf( "  ///   flt v" FLT_VERSION "   ///\n"  ) ;
         printf( " //////////////////////\n"   ) ;
         flt::terminal_reset() ;
 
@@ -371,7 +371,7 @@ void do_cmd_led ( flt::wheel & wheel )
 void print_help ()
 {
         printf( "%s///%s\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
-        printf( "%s///%s flt - fuck logitech - v0.0.1\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
+        printf( "%s///%s flt - fuck logitech - v" FLT_VERSION "\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s commands :\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;
         printf( "%s///%s    q - quit\n", flt::terminal_faint_cstr(), flt::terminal_reset_cstr() ) ;

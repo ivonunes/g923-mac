@@ -283,7 +283,7 @@ SCSAPI_RESULT scs_telemetry_init ( scs_u32_t const version, scs_telemetry_init_p
 
         g_game_log = version_params->common.log ;
 
-        g_game_log( SCS_LOG_TYPE_message, "fffb::info : starting initialization..." ) ;
+        g_game_log( SCS_LOG_TYPE_message, "fffb::info : version " FLT_VERSION " starting initialization..." ) ;
 
         if( strcmp( version_params->common.game_id, SCS_GAME_ID_EUT2 ) == 0 )
         {
