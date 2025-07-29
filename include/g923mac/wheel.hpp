@@ -1,6 +1,6 @@
 //
 //
-//      flt
+//      g923mac
 //      wheel.hpp
 //
 
@@ -15,10 +15,10 @@
 
 #include <mach/mach_error.h>
 
-#define FLT_G923_DEV_ID 0xc266046d
+#define G923MAC_HELPER_G923_DEV_ID 0xc266046d
 
 
-namespace flt
+namespace g923mac
 {
 
 
@@ -73,7 +73,7 @@ public:
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF5 ;
                                 break ;
                         default:
@@ -91,7 +91,7 @@ public:
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF4 ;
                                 break ;
                         default:
@@ -103,13 +103,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_autocenter_spring ( uti::u8_t k1, uti::u8_t k2, uti::u8_t clip ) noexcept
+        constexpr bool set_autocenter_spring ( std::uint8_t k1, std::uint8_t k2, std::uint8_t clip ) noexcept
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xFE ;
                                 rep.cmd[ 1 ] = 0x00 ;
                                 rep.cmd[ 2 ] =   k1 ;
@@ -126,13 +126,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_custom_spring ( uti::u8_t d1, uti::u8_t d2, uti::u8_t k1, uti::u8_t k2, uti::u8_t s1, uti::u8_t s2, uti::u8_t clip )
+        constexpr bool set_custom_spring ( std::uint8_t d1, std::uint8_t d2, std::uint8_t k1, std::uint8_t k2, std::uint8_t s1, std::uint8_t s2, std::uint8_t clip )
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF1 ;
                                 rep.cmd[ 1 ] = 0x01 ;
                                 rep.cmd[ 2 ] = d1 ;
@@ -150,13 +150,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_constant_force ( uti::u8_t force_level )
+        constexpr bool set_constant_force ( std::uint8_t force_level )
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF1 ;
                                 rep.cmd[ 1 ] = 0x00 ;
                                 rep.cmd[ 2 ] = force_level ;
@@ -174,13 +174,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_damper ( uti::u8_t k1, uti::u8_t k2, uti::u8_t s1, uti::u8_t s2 )
+        constexpr bool set_damper ( std::uint8_t k1, std::uint8_t k2, std::uint8_t s1, std::uint8_t s2 )
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF1 ;
                                 rep.cmd[ 1 ] = 0x02 ;
                                 rep.cmd[ 2 ] = k1 ;
@@ -198,13 +198,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_trapezoid ( uti::u8_t l1, uti::u8_t l2, uti::u8_t t1, uti::u8_t t2, uti::u8_t t3, uti::u8_t s )
+        constexpr bool set_trapezoid ( std::uint8_t l1, std::uint8_t l2, std::uint8_t t1, std::uint8_t t2, std::uint8_t t3, std::uint8_t s )
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF1 ;
                                 rep.cmd[ 1 ] = 0x06 ;
                                 rep.cmd[ 2 ] = l1 ;
@@ -228,7 +228,7 @@ public:
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF3 ;
                                 rep.cmd[ 1 ] = 0x00 ;
                                 break ;
@@ -241,13 +241,13 @@ public:
                 return _send_report( rep ) ;
         }
 
-        constexpr bool set_led_pattern ( uti::u8_t pattern )
+        constexpr bool set_led_pattern ( std::uint8_t pattern )
         {
                 report rep ;
 
                 switch( device_.device_id_ )
                 {
-                        case FLT_G923_DEV_ID:
+                        case G923MAC_HELPER_G923_DEV_ID:
                                 rep.cmd[ 0 ] = 0xF8 ;
                                 rep.cmd[ 1 ] = 0x12 ;
                                 rep.cmd[ 2 ] = pattern ;
@@ -276,4 +276,4 @@ private:
 } ;
 
 
-} // namespace flt
+} // namespace g923mac

@@ -1,6 +1,6 @@
 //
 //
-//      flt
+//      g923mac
 //      util.hpp
 //
 
@@ -12,10 +12,10 @@
 
 #include <mach/mach_error.h>
 
-#define FLT_VERSION "0.0.3"
+#define G923MAC_HELPER_VERSION "0.0.1"
 
 
-namespace flt
+namespace g923mac
 {
 
 
@@ -41,7 +41,7 @@ constexpr bool _try ( char const * loc, IOReturn result ) noexcept
         {
                 terminal_bold() ;
                 terminal_red() ;
-                printf( "=== flt::error " ) ;
+                printf( "=== g923mac::error " ) ;
                 terminal_reset() ;
                 printf( ": %s failed with error code %x (%s)\n", loc, result, mach_error_string( result ) ) ;
                 return false ;
@@ -52,13 +52,13 @@ constexpr bool _try ( char const * loc, IOReturn result ) noexcept
 constexpr void print_info ( char const * message ) noexcept
 {
         ( void ) message ;
-//      printf( "%s=== flt::info : %s%s\n", terminal_faint_cstr(), message, terminal_reset_cstr() ) ;
+//      printf( "%s=== g923mac::info : %s%s\n", terminal_faint_cstr(), message, terminal_reset_cstr() ) ;
 }
 
 constexpr void print_error ( char const * message ) noexcept
 {
-        printf( "%s%s=== flt::error %s: %s\n", flt::terminal_red_cstr(), flt::terminal_bold_cstr(), flt::terminal_reset_cstr(), message ) ;
+        printf( "%s%s=== g923mac::error %s: %s\n", g923mac::terminal_red_cstr(), g923mac::terminal_bold_cstr(), g923mac::terminal_reset_cstr(), message ) ;
 }
 
 
-} // namespace flt
+} // namespace g923mac

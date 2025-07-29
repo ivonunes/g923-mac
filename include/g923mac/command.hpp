@@ -1,6 +1,6 @@
 //
 //
-//      flt
+//      g923mac
 //      command.hpp
 //
 
@@ -8,25 +8,25 @@
 
 #include <types.hpp>
 
-#define FLT_CMD_MAX_COUNT 4
-#define FLT_CMD_MAX_LEN   8
+#define G923MAC_HELPER_CMD_MAX_COUNT 4
+#define G923MAC_HELPER_CMD_MAX_LEN   8
 
 
-namespace flt
+namespace g923mac
 {
 
 
 struct report
 {
-        uti::u8_t cmd [ FLT_CMD_MAX_LEN ] ;
+        std::uint8_t cmd [ G923MAC_HELPER_CMD_MAX_LEN ] ;
 } ;
 
 
 constexpr IOReturn send_report ( hid_device const & device, report const & report )
 {
-        uti::u8_t const * cmd = &report.cmd[ 0 ] ;
+        std::uint8_t const * cmd = &report.cmd[ 0 ] ;
 
-        IOReturn result = IOHIDDeviceSetReport( device.hid_device_, kIOHIDReportTypeOutput, time( nullptr ), cmd, FLT_CMD_MAX_LEN ) ;
+        IOReturn result = IOHIDDeviceSetReport( device.hid_device_, kIOHIDReportTypeOutput, time( nullptr ), cmd, G923MAC_HELPER_CMD_MAX_LEN ) ;
 
         return result ;
 }
@@ -45,4 +45,4 @@ constexpr IOReturn send_report ( hid_device const & device, vector< report > con
 }
 
 
-} // namespace flt
+} // namespace g923mac
